@@ -134,7 +134,7 @@ JSON structure required:
   "strength_2": "中文描述第二个优势亮点...",
   "improvement_1": "中文描述第1个改进建议...",
   "improvement_2": "中文描述第2个改进建议...",
-  "refinement": "生成一篇 7.5+ 分水平的满分改写升级版范文...",
+  "refinement": "生成篇 7.5+ 分水平的满分改写升级版范文...",
   "vocab_origin": "学生原作文中的差词",
   "vocab_boost": "升级后的高级词汇",
   "grammar_origin": "学生原作文中的语法错误",
@@ -211,16 +211,16 @@ js_essay_history = json.dumps(st.session_state.essay_history)
 js_loading_status = "true" if st.session_state.loading else "false"
 js_api_configured = "true" if (API_KEY and "填写你的" not in API_KEY) else "false"
 
-# 7. 纯本地高定 CSS 模板，修复 Google 考官专用图标和所有交互功能
+# 7. 全响应式高定本地 CSS 模板，增加手机端隐藏滑出侧边栏等极致体验
 HTML_TEMPLATE = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>IELTS AI Examiner Pro - Dashboard</title>
     
-    <!-- 1. 强力引入 Google 图标库，彻底解决图片中文字露白、扭曲的情况 -->
+    <!-- 引入全球加速考官专用图标库 -->
     <link href="[https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200](https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200)" rel="stylesheet" />
     
     <style>
@@ -253,7 +253,9 @@ HTML_TEMPLATE = f"""
             display: flex;
         }}
 
-        /* Left Sidebar Navigation */
+        /* ----------------------------------------------------- */
+        /* Sidebar Navigation Layout (Mobile Responsive Drawer) */
+        /* ----------------------------------------------------- */
         aside {{
             width: 280px;
             background-color: var(--surface-container-low);
@@ -265,7 +267,20 @@ HTML_TEMPLATE = f"""
             position: fixed;
             left: 0;
             top: 0;
-            z-index: 50;
+            z-index: 99;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+
+        /* Mobile Overlay screen mask */
+        .sidebar-mask {{
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 28, 48, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 90;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
         }}
 
         .brand-section {{
@@ -336,6 +351,7 @@ HTML_TEMPLATE = f"""
             border-radius: 12px;
             border: 1px solid #cbd5e1;
             box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.03);
+            cursor: pointer;
         }}
 
         .promo-card.blue {{
@@ -375,26 +391,29 @@ HTML_TEMPLATE = f"""
             color: var(--text-secondary);
         }}
 
-        /* Top AppBar Shell */
+        /* ----------------------------------------------------- */
+        /* Top AppBar Shell (Mobile friendly margins) */
+        /* ----------------------------------------------------- */
         header {{
             height: 64px;
             border-bottom: 1px solid #cbd5e1;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 32px;
+            padding: 0 24px;
             position: fixed;
             left: 280px;
             right: 0;
             top: 0;
             background: var(--surface);
             z-index: 40;
+            transition: left 0.3s;
         }}
 
         .header-title-group {{
             display: flex;
             align-items: center;
-            gap: 32px;
+            gap: 16px;
         }}
 
         .header-brand-name {{
@@ -406,7 +425,7 @@ HTML_TEMPLATE = f"""
 
         .header-tabs {{
             display: flex;
-            gap: 16px;
+            gap: 12px;
         }}
 
         .header-tab-item {{
@@ -426,30 +445,29 @@ HTML_TEMPLATE = f"""
         .header-right {{
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
         }}
 
         .new-btn {{
             background: var(--primary);
             color: #fff;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             transition: all 0.2s;
         }}
 
         .new-btn:hover {{
             opacity: 0.9;
-            transform: scale(1.02);
         }}
 
-        /* Top Bar Header Buttons */
+        /* Header trigger action buttons */
         .icon-btn {{
             background: none;
             border: none;
@@ -459,22 +477,28 @@ HTML_TEMPLATE = f"""
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 4px;
         }}
         .icon-btn:hover {{
             color: var(--primary);
         }}
 
-        /* Beautiful Custom SVG Academic Avatar placeholder */
+        .menu-toggle {{
+            display: none; /* Hidden on desktop */
+        }}
+
         .academic-avatar-svg {{
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: 2px solid var(--primary);
             background: #eff4ff;
             cursor: pointer;
         }}
 
-        /* Main View Shell */
+        /* ----------------------------------------------------- */
+        /* Main View Shell (Adaptive Scroll layouts) */
+        /* ----------------------------------------------------- */
         main {{
             margin-left: 280px;
             margin-top: 64px;
@@ -483,11 +507,12 @@ HTML_TEMPLATE = f"""
             overflow: hidden;
             width: calc(100% - 280px);
             position: relative;
+            transition: margin-left 0.3s, width 0.3s;
         }}
 
-        /* View blocks */
+        /* Responsive view-block switch containers */
         .view-block {{
-            display: none; /* Controlled by JS switcher */
+            display: none;
             width: 100%;
             height: 100%;
             gap: 24px;
@@ -536,7 +561,7 @@ HTML_TEMPLATE = f"""
             border-radius: 4px;
         }}
 
-        /* Content Boxes */
+        /* Content Bento Card Boxes */
         .content-box {{
             background: var(--surface);
             border: 1px solid #cbd5e1;
@@ -557,7 +582,7 @@ HTML_TEMPLATE = f"""
         }}
 
         .input-label {{
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: var(--text-secondary);
         }}
@@ -609,7 +634,7 @@ HTML_TEMPLATE = f"""
             border: none;
             padding: 14px;
             border-radius: 12px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 800;
             cursor: pointer;
             display: flex;
@@ -622,14 +647,11 @@ HTML_TEMPLATE = f"""
 
         .cta-btn:hover {{
             transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(0, 35, 111, 0.2);
         }}
 
-        .cta-btn:active {{
-            transform: scale(0.98);
-        }}
-
-        /* Output Viewport Area */
+        /* ----------------------------------------------------- */
+        /* Output States Viewport Layout */
+        /* ----------------------------------------------------- */
         .right-viewport {{
             flex: 1;
             position: relative;
@@ -638,7 +660,7 @@ HTML_TEMPLATE = f"""
             height: 100%;
         }}
 
-        /* Empty State default dashboard view */
+        /* Empty Dashboard Default State */
         .empty-state {{
             position: absolute;
             inset: 0;
@@ -679,7 +701,7 @@ HTML_TEMPLATE = f"""
             max-width: 320px;
         }}
 
-        /* Spinner Loading Screen */
+        /* Progress loading state mask */
         .loading-overlay {{
             position: absolute;
             inset: 0;
@@ -708,7 +730,7 @@ HTML_TEMPLATE = f"""
             color: var(--primary);
         }}
 
-        /* Analysis Result Panel */
+        /* Score & Feedback scroll block wrapper */
         .result-scroll-wrapper {{
             position: absolute;
             inset: 0;
@@ -732,7 +754,7 @@ HTML_TEMPLATE = f"""
             background: #fff;
             border: 1px solid #cbd5e1;
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -748,32 +770,32 @@ HTML_TEMPLATE = f"""
         }}
 
         .score-big-num {{
-            font-size: 48px;
+            font-size: 42px;
             font-weight: 900;
             color: var(--primary);
             line-height: 1.1;
         }}
 
         .score-level-desc {{
-            font-size: 12px;
+            font-size: 11px;
             color: var(--secondary);
             font-weight: 800;
-            margin-top: 4px;
+            margin-top: 2px;
         }}
 
         .sub-scores-grid {{
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            gap: 6px;
         }}
 
         .sub-score-box {{
             background-color: var(--background);
             border: 1px solid #f1f5f9;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 8px;
             text-align: center;
-            min-width: 60px;
+            min-width: 54px;
         }}
 
         .sub-score-box .name {{
@@ -783,7 +805,7 @@ HTML_TEMPLATE = f"""
         }}
 
         .sub-score-box .val {{
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
             color: var(--primary);
             margin-top: 2px;
@@ -838,7 +860,7 @@ HTML_TEMPLATE = f"""
             background: #fff;
             border: 1px solid #cbd5e1;
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.03);
         }}
 
@@ -865,10 +887,6 @@ HTML_TEMPLATE = f"""
             display: flex;
             align-items: center;
             gap: 4px;
-        }}
-
-        .copy-btn:hover {{
-            text-decoration: underline;
         }}
 
         .refinement-body {{
@@ -999,11 +1017,6 @@ HTML_TEMPLATE = f"""
             transition: all 0.2s;
         }}
 
-        .history-btn-view:hover {{
-            background-color: var(--primary);
-            color: #fff;
-        }}
-
         /* ----------------------------------------------------- */
         /* TAB 3: Study Groups & Communities Styles */
         /* ----------------------------------------------------- */
@@ -1085,10 +1098,6 @@ HTML_TEMPLATE = f"""
             font-weight: bold;
             cursor: pointer;
             transition: opacity 0.2s;
-        }}
-
-        .group-action-btn:hover {{
-            opacity: 0.9;
         }}
 
         /* ----------------------------------------------------- */
@@ -1204,12 +1213,8 @@ HTML_TEMPLATE = f"""
             box-shadow: 0 4px 10px rgba(0, 81, 213, 0.2);
         }}
 
-        .tier-btn:hover {{
-            transform: translateY(-1px);
-        }}
-
         /* ----------------------------------------------------- */
-        /* Interactive Modal System (弹窗样式) */
+        /* Interactive Modular Overlay Modals (SaaS systems) */
         /* ----------------------------------------------------- */
         .modal-overlay {{
             position: fixed;
@@ -1234,8 +1239,8 @@ HTML_TEMPLATE = f"""
             background: #fff;
             border-radius: 16px;
             padding: 24px;
-            width: 100%;
-            max-width: 420px;
+            width: 90%;
+            max-width: 400px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             transform: scale(0.9);
             transition: transform 0.3s;
@@ -1277,7 +1282,135 @@ HTML_TEMPLATE = f"""
             100% {{ transform: rotate(360deg); }}
         }}
 
-        /* Material Icons Standard Rendering Class */
+        /* ----------------------------------------------------- */
+        /* 🚨 EXTREMELY CRITICAL RESPONSIVE MEDIA QUERIES 🚨 */
+        /* ----------------------------------------------------- */
+        @media (max-width: 768px) {{
+            /* 1. Sidebar Transforms to Sliding Drawer */
+            aside {{
+                transform: translateX(-100%); /* Drawer closed state */
+                box-shadow: 10px 0 25px -5px rgba(11, 28, 48, 0.15);
+            }}
+            aside.open {{
+                transform: translateX(0); /* Open drawer style */
+            }}
+            
+            .sidebar-mask.active {{
+                display: block;
+                opacity: 1;
+            }}
+
+            /* 2. AppBar stretches across screen */
+            header {{
+                left: 0 !important;
+                padding: 0 16px;
+            }}
+
+            .menu-toggle {{
+                display: flex !important; /* Expose drawer button */
+            }}
+
+            .header-tabs {{
+                display: none; /* Hide header tabs on mobile to free space */
+            }}
+
+            .header-brand-name {{
+                font-size: 14px;
+            }}
+
+            .new-btn span:not(.icon-symbol) {{
+                display: none; /* Mobile button labels simplification */
+            }}
+
+            /* 3. Main content shifts dynamically to vertical waterfall */
+            main {{
+                margin-left: 0 !important;
+                width: 100% !important;
+                height: auto;
+                overflow-y: auto;
+                padding: 16px;
+                display: block; /* Remove PC flex grid constraint */
+            }}
+
+            .view-block {{
+                display: none;
+                flex-direction: column !important;
+                height: auto;
+                overflow: visible;
+            }}
+            .view-block.active {{
+                display: flex;
+            }}
+
+            section.left-panel {{
+                width: 100% !important;
+                height: auto;
+            }}
+
+            section.right-panel {{
+                width: 100% !important;
+                height: auto;
+                margin-top: 24px;
+            }}
+
+            /* Expand input height inside phone screen */
+            .content-box {{
+                height: auto;
+                padding: 16px;
+            }}
+            
+            .textarea-flex textarea {{
+                height: 180px; /* Constrain vertical size */
+                flex: none;
+            }}
+
+            /* Right score panel adaptivity */
+            .right-viewport {{
+                height: auto;
+                overflow: visible;
+            }}
+
+            .empty-state {{
+                position: static;
+                padding: 40px 16px;
+                border-radius: 12px;
+            }}
+
+            .result-scroll-wrapper {{
+                position: static;
+                height: auto;
+                overflow: visible;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }}
+
+            .score-hero-card {{
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }}
+
+            .sub-scores-grid {{
+                width: 100%;
+                grid-template-columns: repeat(4, 1fr);
+            }}
+
+            .sub-score-box {{
+                min-width: unset;
+            }}
+
+            .bento-grid, .refinement-grid, .pricing-grid, .groups-grid {{
+                grid-template-columns: 1fr !important; /* Forces single waterfall grid */
+            }}
+
+            /* Limit payment modal on narrow screens */
+            .pricing-grid {{
+                max-width: 100%;
+            }}
+        }}
+
+        /* Material Icons Outlined Fallback */
         .icon-symbol {{
             font-family: 'Material Symbols Outlined';
             font-weight: normal;
@@ -1297,8 +1430,11 @@ HTML_TEMPLATE = f"""
 </head>
 <body>
 
-    <!-- 1. Left Sidebar Navigation with switcher callbacks -->
-    <aside>
+    <!-- 0. Mobile Navigation Screen Mask (Semi-transparent overlay overlay) -->
+    <div class="sidebar-mask" id="sidebarMask" onclick="toggleSidebar(false)"></div>
+
+    <!-- 1. Left Sidebar Navigation with Mobile responsive adaptations -->
+    <aside id="mainSidebar">
         <div class="brand-section">
             <h1 class="brand-title">
                 <span class="icon-symbol" style="font-size: 24px;">school</span>
@@ -1349,9 +1485,13 @@ HTML_TEMPLATE = f"""
         </div>
     </aside>
 
-    <!-- 2. Top AppBar with triggerable modals -->
+    <!-- 2. Top AppBar with Responsive Drawer toggler -->
     <header>
         <div class="header-title-group">
+            <!-- Mobile Drawer Toggle Hamburger Button -->
+            <button class="icon-btn menu-toggle" onclick="toggleSidebar(true)">
+                <span class="icon-symbol" style="font-size:24px;">menu</span>
+            </button>
             <span class="header-brand-name">IELTS AI Examiner Pro</span>
             <div class="header-tabs">
                 <span class="header-tab-item active" onclick="highlightCriterion('TR')">TR</span>
@@ -1363,7 +1503,7 @@ HTML_TEMPLATE = f"""
         <div class="header-right">
             <button onclick="resetTest()" class="new-btn">
                 <span class="icon-symbol" style="font-size:16px;">add</span>
-                New Analysis
+                <span>New Analysis</span>
             </button>
             <button class="icon-btn" onclick="openNotificationModal()">
                 <span class="icon-symbol">notifications</span>
@@ -1372,7 +1512,7 @@ HTML_TEMPLATE = f"""
                 <span class="icon-symbol">settings</span>
             </button>
             
-            <!-- Academic SVG High Fidelity Portrait Fallback -->
+            <!-- High Fidelity Academic Avatar (Dynamic SVG to prevent network breakage) -->
             <svg class="academic-avatar-svg" viewBox="0 0 100 100">
                 <defs>
                     <clipPath id="circle-clip">
@@ -1390,7 +1530,7 @@ HTML_TEMPLATE = f"""
         </div>
     </header>
 
-    <!-- 3. Main Body View Panel -->
+    <!-- 3. Main Adaptive View Grid Panel -->
     <main>
         
         <!-- ============================================================ -->
@@ -1718,6 +1858,19 @@ HTML_TEMPLATE = f"""
             }}
         }};
 
+        // Mobile Sidebar Drawer toggler
+        function toggleSidebar(open) {{
+            const sidebar = document.getElementById('mainSidebar');
+            const mask = document.getElementById('sidebarMask');
+            if (open) {{
+                sidebar.classList.add('open');
+                mask.classList.add('active');
+            }} else {{
+                sidebar.classList.remove('open');
+                mask.classList.remove('active');
+            }}
+        }}
+
         // Tab switcher to switch views (Dash, History, Groups, Pro)
         function switchView(viewId) {{
             // 样式更新：移除所有菜单的激活激活态
@@ -1729,6 +1882,9 @@ HTML_TEMPLATE = f"""
             document.querySelectorAll('.view-block').forEach(block => block.classList.remove('active'));
             const targetBlock = document.getElementById('view-' + viewId);
             if (targetBlock) targetBlock.classList.add('active');
+
+            // 移动端切换视图时，自动缩回侧边栏
+            toggleSidebar(false);
         }}
 
         // Highlights specific evaluation criterion inside the radar dashboard
@@ -1771,9 +1927,9 @@ HTML_TEMPLATE = f"""
                         <p class="history-item-title">${{record.prompt}}</p>
                         <p class="history-item-subtext">📅 测评时间: ${{record.date}} | 📝 类型: ${{record.task}}</p>
                     </div>
-                    <div style="display:flex; align-items:center; gap: 16px;">
-                        <span class="history-item-score-badge">${{record.overall}}分</span>
-                        <button onclick="loadHistoryItem('${{record.id}}')" class="history-btn-view">查看解析看版</button>
+                    <div style="display:flex; align-items:center; gap: 8px;">
+                        <span class="history-item-score-badge" style="font-size: 12px; padding: 4px 8px;">${{record.overall}}分</span>
+                        <button onclick="loadHistoryItem('${{record.id}}')" class="history-btn-view">查看解析</button>
                     </div>
                 `;
                 container.appendChild(row);
@@ -1850,6 +2006,7 @@ HTML_TEMPLATE = f"""
             document.getElementById('commonModalOverlay').classList.add('active');
         }}
 
+        // Explicit modal close
         function closeCommonModal() {{
             document.getElementById('commonModalOverlay').classList.remove('active');
         }}
@@ -1898,5 +2055,5 @@ HTML_TEMPLATE = f"""
 </html>
 """
 
-# 8. 全屏一键无缝注入
-st.components.v1.html(HTML_TEMPLATE, height=720, scrolling=False)
+# 8. 全屏一键无缝注入 (增大 iframe 默认高度以便手机端长页面完美滚动，允许内部垂直滚动)
+st.components.v1.html(HTML_TEMPLATE, height=1300, scrolling=True)
