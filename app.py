@@ -6,7 +6,7 @@ import json
 st.set_page_config(
     page_title="IELTS AI Examiner Pro - Dashboard",
     layout="wide",
-    initial_sidebar_state="collapsed" # 隐藏原生侧边栏，全用我们自己的高定前端
+    initial_sidebar_state="collapsed" # 隐藏原生侧边栏，全面启用高定前端界面
 )
 
 # 2. 从 Secrets 中读取 API 配置
@@ -14,13 +14,34 @@ API_KEY = st.secrets.get("LLM_API_KEY", "")
 BASE_URL = st.secrets.get("LLM_BASE_URL", "https://api.deepseek.com/v1") 
 MODEL_NAME = st.secrets.get("LLM_MODEL_NAME", "deepseek-chat")
 
-# 初始化 session 状态
+# 初始化 session 状态（记录 AI 评估输出数据）
 if "ai_output" not in st.session_state:
     st.session_state.ai_output = None
 
+# 安全清洗 JSON 字符串的函数，利用字符转换绕过反引号语法截断
+def clean_json_string(raw_str):
+    s = raw_str.strip()
+    # 动态生成反引号标志 (```)，防止在代码解析中产生歧义
+    tb = chr(96) * 3
+    if s.startswith(tb):
+        lines = s.split("\n")
+        if len(lines) > 1:
+            lines = lines[1:]  # 去掉首行带 ``` 的标识
+        if lines and lines[-1].strip() == tb:
+            lines = lines[:-1] # 去掉尾行带 ``` 的标识
+        elif lines and lines[-1].endswith(tb):
+            lines[-1] = lines[-1][:-3]
+        s = "\n".join(lines)
+    
+    # 再次清理 JSON 头部可能残留的标识
+    s = s.strip()
+    if s.lower().startswith("json"):
+        s = s[4:].strip()
+    return s.strip()
+
 # 3. 构造静态与动态混合的高定 HTML 模板
 def generate_html(data=None):
-    # 默认展示的数据（假数据，让页面一进来就非常丰满好看）
+    # 默认展示的模拟数据（保证用户未输入前，界面展示也极其丰满、高级）
     overall = data.get("overall", "7.5") if data else "7.5"
     level = data.get("level", "Good User (C1 Advanced)") if data else "Good User (C1 Advanced)"
     tr = data.get("tr", "7.0") if data else "7.0"
@@ -41,8 +62,8 @@ def generate_html(data=None):
     g_orig = data.get("grammar_origin", "The research show") if data else "The research show"
     g_fix = data.get("grammar_fix", "shows") if data else "shows"
 
-    # 如果没有真实数据，提示用户这是一个预览
-    watermark = "" if data else '<div style="background:#fffbeb; color:#b45309; padding:8px; border-radius:8px; text-align:center; font-size:12px; margin-bottom:10px; font-weight:bold;">⚠️ 当前展示为静态高定设计模板，请在下方提交真实作文激活 AI 实时精批报告</div>'
+    # 动态渲染顶层的水印提示
+    watermark = "" if data else '<div style="background:#fffbeb; color:#b45309; padding:10px; border-radius:12px; text-align:center; font-size:13px; margin-bottom:12px; font-weight:bold; border: 1px solid #fef3c7;">⚠️ 当前展示为静态高定设计模板，请在下方提交真实作文激活 AI 实时精批报告</div>'
 
     html_code = f"""
     <!DOCTYPE html>
@@ -50,9 +71,9 @@ def generate_html(data=None):
     <head>
         <meta charset="utf-8"/>
         <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+        <script src="[https://cdn.tailwindcss.com?plugins=forms,container-queries](https://cdn.tailwindcss.com?plugins=forms,container-queries)"></script>
+        <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap)" rel="stylesheet"/>
+        <link href="[https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap](https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap)" rel="stylesheet"/>
         <style>
             body {{ font-family: 'Inter', sans-serif; background-color: #f8f9ff; }}
             .academic-shadow {{ box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.05); }}
@@ -61,7 +82,8 @@ def generate_html(data=None):
     <body class="bg-background text-on-background p-4">
         {watermark}
         <div class="flex flex-col lg:flex-row gap-6">
-            <div class="w-full lg:w-[280px] bg-slate-50 rounded-2xl p-4 flex flex-col gap-4 border border-slate-100">
+            <!-- Left Sidebar Section -->
+            <div class="w-full lg:w-[280px] bg-slate-50 rounded-2xl p-4 flex flex-col gap-4 border border-slate-100 shrink-0">
                 <div>
                     <h1 class="text-xl font-black text-[#00236f]">🎓 雅思AI备考中心</h1>
                     <p class="text-xs text-slate-400">Premium v2.5 (商业尊享版)</p>
@@ -77,11 +99,14 @@ def generate_html(data=None):
                 <p class="text-[10px] text-slate-400 border-t pt-2 border-slate-200">⚙️ DeepSeek-V3 Engine Support</p>
             </div>
 
+            <!-- Right Content Area -->
             <div class="flex-1 space-y-4">
+                <!-- Header Banner -->
                 <div class="border-b pb-2 flex justify-between items-center">
                     <h2 class="text-lg font-bold text-[#00236f]">📊 AI 评估结果报告 (Official Report)</h2>
                 </div>
 
+                <!-- Band Score Hero -->
                 <div class="bg-white border border-slate-200 rounded-xl academic-shadow p-6 flex items-center justify-between">
                     <div>
                         <p class="text-xs text-slate-400 uppercase tracking-wider font-bold">Overall Band Score</p>
@@ -89,25 +114,26 @@ def generate_html(data=None):
                         <p class="text-sm text-blue-600 font-bold mt-1">{level}</p>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100">
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100 min-w-[60px]">
                             <p class="text-[10px] text-slate-400 font-bold">TR</p>
                             <p class="text-md font-bold text-[#00236f]">{tr}</p>
                         </div>
-                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100">
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100 min-w-[60px]">
                             <p class="text-[10px] text-slate-400 font-bold">CC</p>
                             <p class="text-md font-bold text-[#00236f]">{cc}</p>
                         </div>
-                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100">
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100 min-w-[60px]">
                             <p class="text-[10px] text-slate-400 font-bold">LR</p>
                             <p class="text-md font-bold text-[#00236f]">{lr}</p>
                         </div>
-                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100">
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg text-center border border-slate-100 min-w-[60px]">
                             <p class="text-[10px] text-slate-400 font-bold">GRA</p>
                             <p class="text-md font-bold text-[#00236f]">{gra}</p>
                         </div>
                     </div>
                 </div>
 
+                <!-- Bento Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white border-l-4 border-l-blue-600 rounded-xl academic-shadow p-4 border border-slate-200">
                         <p class="text-sm font-bold text-blue-600 mb-2">优势亮点 (Strengths)</p>
@@ -125,6 +151,7 @@ def generate_html(data=None):
                     </div>
                 </div>
 
+                <!-- Model Essay -->
                 <div class="bg-white border border-slate-200 rounded-xl academic-shadow p-5">
                     <h4 class="text-sm font-bold text-[#00236f] mb-2">✨ AI 满分改写建议 (Refinement)</h4>
                     <div class="p-4 bg-slate-50 rounded-lg text-xs italic text-slate-600 border border-slate-100 leading-relaxed">
@@ -133,11 +160,11 @@ def generate_html(data=None):
                     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="p-3 bg-slate-50 rounded border border-slate-100">
                             <p class="text-[10px] text-slate-400 font-bold uppercase">Vocabulary Boost</p>
-                            <p class="text-xs">Instead of "{v_orig}", use <span class="text-blue-600 font-bold">"{v_boost}"</span></p>
+                            <p class="text-xs mt-1">Instead of "{v_orig}", use <span class="text-blue-600 font-bold">"{v_boost}"</span></p>
                         </div>
                         <div class="p-3 bg-slate-50 rounded border border-slate-100">
                             <p class="text-[10px] text-slate-400 font-bold uppercase">Grammar Fix</p>
-                            <p class="text-xs">Correction: <span class="text-red-500 line-through">"{g_orig}"</span> → <span class="text-blue-600 font-bold">"{g_fix}"</span></p>
+                            <p class="text-xs mt-1">Correction: <span class="text-red-500 line-through">"{g_orig}"</span> → <span class="text-blue-600 font-bold">"{g_fix}"</span></p>
                         </div>
                     </div>
                 </div>
@@ -148,13 +175,13 @@ def generate_html(data=None):
     """
     return html_code
 
-# 4. 渲染上方的高定看版
+# 4. 渲染上方的高定看板
 st.components.v1.html(generate_html(st.session_state.ai_output), height=640, scrolling=True)
 
 st.markdown("---")
 
 # 5. 下方控制面板
-st.markdown("### 📥 真实作文本系统提交区")
+st.markdown("<h3 style='color:#00236f; font-family:Inter;'>📥 真实作文本系统提交区</h3>", unsafe_allow_html=True)
 col_in1, col_in2 = st.columns([1, 2])
 
 with col_in1:
@@ -170,7 +197,7 @@ if submit_btn:
     if not essay_input or not prompt_input:
         st.warning("⚠️ 请输入题目和文章！")
     elif "填写你的" in API_KEY or not API_KEY:
-        st.error("❌ 密钥未配置，请回到 Secrets 贴入真实的 DeepSeek Key。")
+        st.error("❌ 密钥配置失效。请在 Streamlit 的 Settings -> Secrets 中贴入真实的 DeepSeek Key。")
     else:
         with st.spinner("⚡ AI 正在精批中..."):
             try:
@@ -191,8 +218,9 @@ Structure:
                     temperature=0.2
                 )
                 
-                clean_raw = response.choices[0].message.content.strip()
-                if clean_raw.startswith("
-http://googleusercontent.com/immersive_entry_chip/0
-
-把这个全新的代码全选覆盖进去，刷新网页。你会发现：**网页一打开就完美呈现出你发给我的那套高定设计，不仅有侧边栏福利，还有漂亮的分数盒子！** 只要换上正确的 API Key 提交，上方的数据就会立刻实时刷新！
+                raw_content = response.choices[0].message.content
+                clean_raw = clean_json_string(raw_content)
+                st.session_state.ai_output = json.loads(clean_raw)
+                st.rerun() # 立即重载刷新网页，将数据渲染到高定看板
+            except Exception as e:
+                st.error(f"分析出错，请检查配置: {str(e)}")
