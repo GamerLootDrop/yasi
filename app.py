@@ -2,7 +2,7 @@ import streamlit as st
 import json
 from openai import OpenAI
 
-# 1. 强制覆盖并接管 Streamlit 的原生样式，使其达到 100% 全屏无边界 HTML 体验
+# 1. 强制覆盖并接管 Streamlit 的原生样式，达到 100% 全屏无边界 HTML 体验
 st.set_page_config(
     page_title="IELTS AI Examiner Pro - Dashboard",
     layout="wide",
@@ -138,322 +138,946 @@ js_last_task = json.dumps(st.session_state.last_task)
 js_loading_status = "true" if st.session_state.loading else "false"
 js_api_configured = "true" if (API_KEY and "填写你的" not in API_KEY) else "false"
 
-# 7. 完整还原、融汇、进化的前端高定页面模板
+# 7. 纯本地高定 CSS 模板，彻底干掉外网 CDN
 HTML_TEMPLATE = f"""
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>IELTS AI Examiner Pro - Dashboard</title>
-    <script src="[https://cdn.tailwindcss.com?plugins=forms,container-queries](https://cdn.tailwindcss.com?plugins=forms,container-queries)"></script>
-    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap)" rel="stylesheet"/>
-    <link href="[https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap](https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap)" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {{
-            darkMode: "class",
-            theme: {{
-                extend: {{
-                    "colors": {{
-                        "on-error-container": "#93000a",
-                        "surface-container-high": "#dce9ff",
-                        "on-tertiary-container": "#f39461",
-                        "primary-fixed": "#dce1ff",
-                        "on-surface-variant": "#444651",
-                        "on-secondary": "#ffffff",
-                        "tertiary-fixed": "#ffdbcb",
-                        "secondary-fixed-dim": "#b4c5ff",
-                        "primary": "#00236f",
-                        "surface": "#f8f9ff",
-                        "error-container": "#ffdad6",
-                        "background": "#f8f9ff",
-                        "on-secondary-fixed": "#00174b",
-                        "on-primary-fixed-variant": "#264191",
-                        "secondary-fixed": "#dbe1ff",
-                        "surface-container-low": "#eff4ff",
-                        "surface-container-highest": "#d3e4fe",
-                        "surface-bright": "#f8f9ff",
-                        "on-secondary-container": "#fefcff",
-                        "inverse-primary": "#b6c4ff",
-                        "on-tertiary": "#ffffff",
-                        "on-surface": "#0b1c30",
-                        "inverse-on-surface": "#eaf1ff",
-                        "outline-variant": "#c5c5d3",
-                        "on-primary-container": "#90a8ff",
-                        "primary-fixed-dim": "#b6c4ff",
-                        "secondary": "#0051d5",
-                        "on-primary": "#ffffff",
-                        "on-background": "#0b1c30",
-                        "surface-variant": "#d3e4fe",
-                        "on-tertiary-fixed": "#341100",
-                        "inverse-surface": "#213145",
-                        "on-error": "#ffffff",
-                        "on-secondary-fixed-variant": "#003ea8",
-                        "on-primary-fixed": "#00164e",
-                        "surface-container": "#e5eeff",
-                        "surface-tint": "#4059aa",
-                        "error": "#ba1a1a",
-                        "on-tertiary-fixed-variant": "#773205",
-                        "surface-container-lowest": "#ffffff",
-                        "tertiary-container": "#6e2c00",
-                        "surface-dim": "#cbdbf5",
-                        "primary-container": "#1e3a8a",
-                        "outline": "#757682",
-                        "tertiary": "#4b1c00",
-                        "tertiary-fixed-dim": "#ffb691",
-                        "secondary-container": "#316bf3"
-                    }}
-                }}
-            }}
-        }}
-    </script>
+    
+    <!-- 纯本地核心高定样式表，即使断网也能 100% 完美呈现 -->
     <style>
-        body {{ font-family: 'Inter', sans-serif; }}
-        .material-symbols-outlined {{
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        :root {{
+            --primary: #00236f;
+            --secondary: #0051d5;
+            --background: #f8f9ff;
+            --surface: #ffffff;
+            --surface-container-low: #eff4ff;
+            --surface-container-high: #dce9ff;
+            --text-primary: #0b1c30;
+            --text-secondary: #444651;
+            --border-color: #cbd5e1;
+            --error: #ba1a1a;
+            --success: #166534;
         }}
-        .academic-shadow {{
-            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.05), 0 2px 4px -1px rgba(30, 58, 138, 0.03);
+
+        * {{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }}
-        .writing-pane {{
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 #f8f9ff;
+
+        body {{
+            font-family: 'Inter', -apple-system, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }}
+
+        /* 1. Left Sidebar Navigation */
+        aside {{
+            width: 280px;
+            background-color: var(--surface-container-low);
+            padding: 24px;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 50;
+        }}
+
+        .brand-section {{
+            margin-bottom: 32px;
+        }}
+
+        .brand-title {{
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }}
+
+        .brand-sub {{
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 4px;
+            opacity: 0.7;
+        }}
+
+        nav {{
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-1;
+        }}
+
+        .nav-link {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+        }}
+
+        .nav-link:hover {{
+            background-color: #e5eeff;
+            color: var(--primary);
+        }}
+
+        .nav-link.active {{
+            color: var(--primary);
+            font-weight: 700;
+            background-color: var(--surface-container-high);
+            border-right: 4px solid var(--primary);
+        }}
+
+        .sidebar-footer {{
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }}
+
+        .promo-card {{
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.03);
+        }}
+
+        .promo-card.blue {{
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #bfdbfe;
+        }}
+
+        .promo-card.indigo {{
+            background: linear-gradient(135deg, #f5f3ff 0%, #edd8ff 100%);
+            border-color: #ddd6fe;
+        }}
+
+        .promo-header {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }}
+
+        .promo-text {{
+            font-size: 11px;
+            line-height: 1.5;
+            color: #1e3a8a;
+        }}
+
+        .sidebar-bottom-row {{
+            border-top: 1px solid #cbd5e1;
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--text-secondary);
+        }}
+
+        /* 2. Top AppBar Shell */
+        header {{
+            height: 64px;
+            border-bottom: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: fixed;
+            left: 280px;
+            right: 0;
+            top: 0;
+            background: var(--surface);
+            z-index: 40;
+        }}
+
+        .header-title-group {{
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }}
+
+        .header-brand-name {{
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }}
+
+        .header-tabs {{
+            display: flex;
+            gap: 16px;
+        }}
+
+        .header-tab-item {{
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding-bottom: 4px;
+            transition: all 0.2s;
+        }}
+
+        .header-tab-item:hover, .header-tab-item.active {{
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }}
+
+        .header-right {{
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }}
+
+        .new-btn {{
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }}
+
+        .new-btn:hover {{
+            opacity: 0.9;
+            transform: scale(1.02);
+        }}
+
+        .avatar {{
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+        }}
+
+        .avatar img {{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }}
+
+        /* 3. Main Layout Containers */
+        main {{
+            margin-left: 280px;
+            margin-top: 64px;
+            height: calc(100vh - 64px);
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            overflow: hidden;
+            width: calc(100% - 280px);
+        }}
+
+        section {{
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }}
+
+        section.left-panel {{
+            width: 45%;
+        }}
+
+        section.right-panel {{
+            flex: 1;
+        }}
+
+        .panel-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+
+        .panel-title {{
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+
+        .panel-badge {{
+            font-size: 10px;
+            font-weight: 800;
+            background-color: var(--surface-container-high);
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }}
+
+        /* Content Boxes */
+        .content-box {{
+            background: var(--surface);
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.02);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow: hidden;
+        }}
+
+        .input-group {{
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }}
+
+        .input-label {{
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }}
+
+        select, textarea {{
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: var(--text-primary);
+            outline: none;
+            background-color: #fff;
+            transition: all 0.2s;
+        }}
+
+        select:focus, textarea:focus {{
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 35, 111, 0.1);
+        }}
+
+        textarea {{
+            resize: none;
+        }}
+
+        .textarea-flex {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }}
+
+        .textarea-flex textarea {{
+            flex: 1;
+        }}
+
+        .word-count {{
+            display: flex;
+            justify-content: flex-end;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-top: 4px;
+        }}
+
+        .cta-btn {{
+            width: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0, 35, 111, 0.15);
+            transition: all 0.2s;
+        }}
+
+        .cta-btn:hover {{
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0, 35, 111, 0.2);
+        }}
+
+        .cta-btn:active {{
+            transform: scale(0.98);
+        }}
+
+        /* 4. Output States Layout */
+        .right-viewport {{
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            height: 100%;
+        }}
+
+        /* Empty State */
+        .empty-state {{
+            position: absolute;
+            inset: 0;
+            background-color: var(--surface-container-low);
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            text-align: center;
+            gap: 16px;
+        }}
+
+        .empty-icon-circle {{
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: var(--surface-container-high);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }}
+
+        .empty-text-title {{
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }}
+
+        .empty-text-sub {{
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 320px;
+        }}
+
+        /* Loading State Overlay */
+        .loading-overlay {{
+            position: absolute;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(2px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }}
+
+        .spinner {{
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 35, 111, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }}
+
+        .loading-text {{
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--primary);
+        }}
+
+        .loading-sub {{
+            font-size: 10px;
+            color: var(--text-secondary);
+            font-weight: bold;
+        }}
+
+        /* Real Result View Panel (Scrollable) */
+        .result-scroll-wrapper {{
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-right: 4px;
+        }}
+
+        .result-scroll-wrapper::-webkit-scrollbar {{
+            width: 6px;
+        }}
+
+        .result-scroll-wrapper::-webkit-scrollbar-thumb {{
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }}
+
+        /* Band Score Hero Card */
+        .score-hero-card {{
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.03);
+        }}
+
+        .score-label {{
+            font-size: 10px;
+            font-weight: 900;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+
+        .score-big-num {{
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1.1;
+        }}
+
+        .score-level-desc {{
+            font-size: 12px;
+            color: var(--secondary);
+            font-weight: 800;
+            margin-top: 4px;
+        }}
+
+        .sub-scores-grid {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }}
+
+        .sub-score-box {{
+            background-color: var(--background);
+            border: 1px solid #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 60px;
+        }}
+
+        .sub-score-box .name {{
+            font-size: 9px;
+            color: #94a3b8;
+            font-weight: 900;
+        }}
+
+        .sub-score-box .val {{
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 2px;
+        }}
+
+        /* Bento Grid: Strengths & Weaknesses */
+        .bento-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }}
+
+        .bento-card {{
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.03);
+            border-left-width: 4px;
+        }}
+
+        .bento-card.success {{
+            border-left-color: var(--secondary);
+        }}
+
+        .bento-card.error {{
+            border-left-color: var(--error);
+        }}
+
+        .bento-card-title {{
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }}
+
+        .bento-card-title.success {{ color: var(--secondary); }}
+        .bento-card-title.error {{ color: var(--error); }}
+
+        .bento-list {{
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }}
+
+        /* AI Refinement Card */
+        .refinement-card {{
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.03);
+        }}
+
+        .refinement-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }}
+
+        .refinement-title {{
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary);
+        }}
+
+        .copy-btn {{
+            border: none;
+            background: none;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }}
+
+        .copy-btn:hover {{
+            text-decoration: underline;
+        }}
+
+        .refinement-body {{
+            background-color: var(--background);
+            border: 1px solid #f1f5f9;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-style: italic;
+            color: #475569;
+            line-height: 1.6;
+            word-break: break-word;
+        }}
+
+        .refinement-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }}
+
+        .boost-box {{
+            background-color: var(--background);
+            border: 1px solid #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+        }}
+
+        .boost-tag {{
+            font-size: 9px;
+            color: #94a3b8;
+            font-weight: 900;
+            text-transform: uppercase;
+        }}
+
+        .boost-content {{
+            font-size: 12px;
+            margin-top: 4px;
+            line-height: 1.4;
+        }}
+
+        /* Animations */
+        @keyframes spin {{
+            0% {{ transform: rotate(0deg); }}
+            100% {{ transform: rotate(360deg); }}
+        }}
+
+        /* Material Icons fallback standard mapping */
+        .icon-symbol {{
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
         }}
     </style>
 </head>
-<body class="bg-background text-on-background overflow-hidden">
+<body>
 
-    <!-- 1. Left Sidebar Navigation Shell -->
-    <aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container-low shadow-sm flex flex-col p-6 z-50 border-r border-slate-100">
-        <div class="mb-8">
-            <h1 class="text-xl font-black text-primary mb-1 flex items-center gap-1">🎓 雅思AI备考中心</h1>
-            <p class="text-on-surface-variant text-[11px] font-bold opacity-70 uppercase tracking-widest">Premium v2.5</p>
+    <!-- 1. Left Sidebar Navigation -->
+    <aside>
+        <div class="brand-section">
+            <h1 class="brand-title">🎓 雅思AI备考中心</h1>
+            <p class="brand-sub">Premium v2.5</p>
         </div>
-        <nav class="flex-1 space-y-2">
-            <a id="nav-dash" class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-container-high transition-colors" href="#">
-                <span class="material-symbols-outlined">dashboard</span>
+        <nav>
+            <a class="nav-link active" href="#" id="nav-dash">
+                <span class="icon-symbol">dashboard</span>
                 <span>Dashboard</span>
             </a>
-            <a id="nav-history" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
-                <span class="material-symbols-outlined">history</span>
+            <a class="nav-link" href="#" id="nav-history">
+                <span class="icon-symbol">history</span>
                 <span>Essay History</span>
             </a>
-            <a id="nav-groups" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
-                <span class="material-symbols-outlined">group</span>
+            <a class="nav-link" href="#" id="nav-groups">
+                <span class="icon-symbol">group</span>
                 <span>Study Groups</span>
             </a>
-            <a id="nav-pro" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
-                <span class="material-symbols-outlined">workspace_premium</span>
+            <a class="nav-link" href="#" id="nav-pro">
+                <span class="icon-symbol">workspace_premium</span>
                 <span>Pro Benefits</span>
             </a>
         </nav>
-        <div class="mt-auto space-y-4">
-            <!-- Benefit Card 1 (Blue) -->
-            <div class="bg-primary-container text-on-primary-fixed p-4 rounded-xl academic-shadow border border-blue-100/50">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">card_giftcard</span>
-                    <span class="text-xs font-bold text-primary">🎁 独家备考福利</span>
+        
+        <div class="sidebar-footer">
+            <div class="promo-card blue">
+                <div class="promo-header">
+                    <span class="icon-symbol" style="font-variation-settings: 'FILL' 1">card_giftcard</span>
+                    <span>🎁 独家备考福利</span>
                 </div>
-                <p class="text-[11px] leading-relaxed text-slate-600">后台回复 “<b>雅思真题</b>” 即可免费领取 2026 最新雅思考试机经预测及高分词汇表。</p>
+                <p class="promo-text">后台回复 “<b>雅思真题</b>” 即可免费领取 2026 最新雅思考试机经预测及高分词汇表。</p>
             </div>
-            <!-- Benefit Card 2 (Green/Purple) -->
-            <div class="bg-indigo-50 text-indigo-950 p-4 rounded-xl academic-shadow border border-indigo-100">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-indigo-700" style="font-variation-settings: 'FILL' 1">groups</span>
-                    <span class="text-xs font-bold text-indigo-800">👥 互助打卡群</span>
+            
+            <div class="promo-card indigo">
+                <div class="promo-header">
+                    <span class="icon-symbol" style="font-variation-settings: 'FILL' 1">groups</span>
+                    <span>👥 互助打卡群</span>
                 </div>
-                <p class="text-[11px] leading-relaxed opacity-90">添加学长微信，备注 “<b>作文打卡</b>”，受邀加入千人雅思备考群。</p>
+                <p class="promo-text">添加学长微信，备注 “<b>作文打卡</b>”，受邀加入千人雅思备考群。</p>
             </div>
-            <div class="pt-4 border-t border-outline-variant flex items-center justify-between">
-                <span class="text-[10px] font-bold text-on-surface-variant">⚙️ DeepSeek-V3 Support</span>
-                <span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">help_outline</span>
+            
+            <div class="sidebar-bottom-row">
+                <span>⚙️ DeepSeek-V3 Support</span>
+                <span class="icon-symbol" style="font-size:16px; cursor:pointer;">help_outline</span>
             </div>
         </div>
     </aside>
 
-    <!-- 2. Top AppBar Shell -->
-    <header class="fixed top-0 left-[280px] right-0 h-16 bg-surface border-b border-outline-variant flex items-center justify-between px-8 z-40">
-        <div class="flex items-center gap-8">
-            <span class="text-md font-black text-primary tracking-tight">IELTS AI Examiner Pro</span>
-            <div class="flex gap-4">
-                <span class="text-primary border-b-2 border-primary pb-1 font-bold text-xs cursor-pointer">TR</span>
-                <span class="text-on-surface-variant hover:text-primary transition-all font-semibold text-xs cursor-pointer">CC</span>
-                <span class="text-on-surface-variant hover:text-primary transition-all font-semibold text-xs cursor-pointer">LR</span>
-                <span class="text-on-surface-variant hover:text-primary transition-all font-semibold text-xs cursor-pointer">GRA</span>
+    <!-- 2. Top AppBar -->
+    <header>
+        <div class="header-title-group">
+            <span class="header-brand-name">IELTS AI Examiner Pro</span>
+            <div class="header-tabs">
+                <span class="header-tab-item active">TR</span>
+                <span class="header-tab-item">CC</span>
+                <span class="header-tab-item">LR</span>
+                <span class="header-tab-item">GRA</span>
             </div>
         </div>
-        <div class="flex items-center gap-4">
-            <button onclick="resetTest()" class="bg-primary text-on-primary px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 active:scale-95 duration-200 transition-all flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[16px]">add</span>
+        <div class="header-right">
+            <button onclick="resetTest()" class="new-btn">
+                <span class="icon-symbol" style="font-size:16px;">add</span>
                 New Analysis
             </button>
-            <span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">notifications</span>
-            <span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">settings</span>
-            <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
-                <img alt="User Avatar" class="w-full h-full object-cover" src="[https://lh3.googleusercontent.com/aida-public/AB6AXuA6OsXNWZ68DPQHc81CV6O6_nnxwGSPx2rK82Km0XDB5dMrJIdt6eewicggxVE44SPbbqDv-QJnxSB8yYSfOXC0-DcoETi4yO9e2S_wGGwqVaMlQJd8TkRncoVcFw3Fi9JzmWlNujI6mHKhmOx4MoDrLLAngvmaW-5dZD1lZTxYLsXeu_IK6Lq-0gd4YmvT2YxSTk35vkiqcyZLXI8CI9WmkaysWRl_uFesTx6vL9RSwEteK5Esa63RaMTi884rqIlfnbzFn216jg](https://lh3.googleusercontent.com/aida-public/AB6AXuA6OsXNWZ68DPQHc81CV6O6_nnxwGSPx2rK82Km0XDB5dMrJIdt6eewicggxVE44SPbbqDv-QJnxSB8yYSfOXC0-DcoETi4yO9e2S_wGGwqVaMlQJd8TkRncoVcFw3Fi9JzmWlNujI6mHKhmOx4MoDrLLAngvmaW-5dZD1lZTxYLsXeu_IK6Lq-0gd4YmvT2YxSTk35vkiqcyZLXI8CI9WmkaysWRl_uFesTx6vL9RSwEteK5Esa63RaMTi884rqIlfnbzFn216jg)"/>
+            <span class="icon-symbol" style="color:#757682; cursor:pointer;">notifications</span>
+            <span class="icon-symbol" style="color:#757682; cursor:pointer;">settings</span>
+            <div class="avatar">
+                <img alt="User Avatar" src="[https://lh3.googleusercontent.com/aida-public/AB6AXuA6OsXNWZ68DPQHc81CV6O6_nnxwGSPx2rK82Km0XDB5dMrJIdt6eewicggxVE44SPbbqDv-QJnxSB8yYSfOXC0-DcoETi4yO9e2S_wGGwqVaMlQJd8TkRncoVcFw3Fi9JzmWlNujI6mHKhmOx4MoDrLLAngvmaW-5dZD1lZTxYLsXeu_IK6Lq-0gd4YmvT2YxSTk35vkiqcyZLXI8CI9WmkaysWRl_uFesTx6vL9RSwEteK5Esa63RaMTi884rqIlfnbzFn216jg](https://lh3.googleusercontent.com/aida-public/AB6AXuA6OsXNWZ68DPQHc81CV6O6_nnxwGSPx2rK82Km0XDB5dMrJIdt6eewicggxVE44SPbbqDv-QJnxSB8yYSfOXC0-DcoETi4yO9e2S_wGGwqVaMlQJd8TkRncoVcFw3Fi9JzmWlNujI6mHKhmOx4MoDrLLAngvmaW-5dZD1lZTxYLsXeu_IK6Lq-0gd4YmvT2YxSTk35vkiqcyZLXI8CI9WmkaysWRl_uFesTx6vL9RSwEteK5Esa63RaMTi884rqIlfnbzFn216jg)"/>
             </div>
         </div>
     </header>
 
-    <!-- 3. Main Content Canvas -->
-    <main class="ml-[280px] mt-16 p-6 h-[calc(100vh-64px)] flex gap-6 overflow-hidden">
-        
-        <!-- Left Column: Submission Panel -->
-        <section class="w-[45%] flex flex-col gap-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-md font-extrabold text-primary flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-primary">edit_note</span>
+    <!-- 3. Main Body Canvas -->
+    <main>
+        <!-- Left Panel: Form Submission -->
+        <section class="left-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <span class="icon-symbol" style="color:var(--primary);">edit_note</span>
                     📥 提交作文本系统
                 </h2>
-                <span class="text-[10px] bg-surface-container-high px-2 py-1 rounded text-primary font-bold">Academic Mode</span>
+                <span class="panel-badge">Academic Mode</span>
             </div>
             
-            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl academic-shadow p-6 flex-1 flex flex-col gap-4">
-                <!-- Task Type -->
-                <div class="space-y-1">
-                    <label class="text-xs font-bold text-on-surface-variant block">📝 选择你的作文类型 (Task Type)</label>
-                    <select id="taskSelect" class="w-full rounded-lg border-outline-variant focus:ring-primary focus:border-primary text-sm">
+            <div class="content-box">
+                <div class="input-group">
+                    <label class="input-label">📝 选择你的作文类型 (Task Type)</label>
+                    <select id="taskSelect">
                         <option value="IELTS Academic Task 2 (Essay)">IELTS Academic Task 2 (Essay)</option>
                         <option value="IELTS Academic Task 1 (Report/Data)">IELTS Academic Task 1 (Report/Data)</option>
                         <option value="IELTS General Training Task 1 (Letter)">IELTS General Training Task 1 (Letter)</option>
                     </select>
                 </div>
-                <!-- Prompt -->
-                <div class="space-y-1">
-                    <label class="text-xs font-bold text-on-surface-variant block">📌 输入作文题目 (Prompt/Question)</label>
-                    <textarea id="promptInput" class="w-full rounded-lg border-outline-variant focus:ring-primary focus:border-primary text-sm resize-none" placeholder="Type or paste the exam question here..." rows="3"></textarea>
+                
+                <div class="input-group">
+                    <label class="input-label">📌 输入作文题目 (Prompt/Question)</label>
+                    <textarea id="promptInput" rows="3" placeholder="Type or paste the exam question here..."></textarea>
                 </div>
-                <!-- Essay Area -->
-                <div class="space-y-1 flex-1 flex flex-col">
-                    <label class="text-xs font-bold text-on-surface-variant block">✍️ 粘贴你的文章 (Your Essay)</label>
-                    <textarea id="essayInput" oninput="updateWordCount()" class="flex-1 w-full rounded-lg border-outline-variant focus:ring-primary focus:border-primary text-sm writing-pane p-4" placeholder="Start writing or paste your essay content here. Minimum 250 words recommended for Task 2..."></textarea>
-                    <div class="flex justify-end pt-1">
-                        <span id="wordCount" class="text-[11px] font-semibold text-outline">Word Count: 0 words</span>
+                
+                <div class="input-group textarea-flex">
+                    <label class="input-label">✍️ 粘贴你的文章 (Your Essay)</label>
+                    <textarea id="essayInput" oninput="updateWordCount()" placeholder="Start writing or paste your essay content here. Minimum 250 words recommended for Task 2..."></textarea>
+                    <div class="word-count">
+                        <span id="wordCount">Word Count: 0 words</span>
                     </div>
                 </div>
-                <!-- CTA Button -->
-                <button onclick="startAnalysis()" class="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-on-primary font-bold hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2" id="startAnalysisBtn">
-                    <span class="material-symbols-outlined">rocket_launch</span>
+                
+                <button onclick="startAnalysis()" class="cta-btn" id="startAnalysisBtn">
+                    <span class="icon-symbol" style="color:#fff;">rocket_launch</span>
                     🚀 开始 AI 深度精批
                 </button>
             </div>
         </section>
 
-        <!-- Right Column: Analysis Output -->
-        <section class="flex-1 flex flex-col gap-4">
-            <h2 class="text-md font-extrabold text-primary flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-primary">analytics</span>
-                📊 AI 评估结果报告
-            </h2>
-            <div class="flex-1 relative overflow-hidden" id="resultsContainer">
-                
-                <!-- Default State (Empty Card) -->
-                <div class="absolute inset-0 bg-surface-container-low border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-8 text-center space-y-4" id="emptyState">
-                    <div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container">
-                        <span class="material-symbols-outlined text-[36px]" style="font-variation-settings: 'opsz' 36">psychology</span>
+        <!-- Right Panel: Diagnostics Outputs -->
+        <section class="right-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <span class="icon-symbol" style="color:var(--primary);">analytics</span>
+                    📊 AI 评估结果报告
+                </h2>
+            </div>
+            
+            <div class="right-viewport">
+                <!-- 1. Default State (Empty Dashboard) -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon-circle">
+                        <span class="icon-symbol" style="font-size:36px;">psychology</span>
                     </div>
-                    <div class="max-w-sm space-y-1.5">
-                        <h3 class="text-sm font-extrabold text-on-surface">等待评估</h3>
-                        <p class="text-xs text-on-surface-variant leading-relaxed">💡 在左侧填写好题目和作文，点击“开始 AI 深度精批”，5秒内为您呈献满分改写与四维诊断报告。</p>
+                    <div>
+                        <h3 class="empty-text-title">等待评估</h3>
+                        <p class="empty-text-sub">💡 在左侧填写好题目和作文，点击“开始 AI 深度精批”，5秒内为您呈献满分改写与四维诊断报告。</p>
                     </div>
                 </div>
 
-                <!-- Analysis Results (Hidden by default, shown dynamically via JS) -->
-                <div class="hidden absolute inset-0 overflow-y-auto writing-pane pr-2 space-y-4" id="analysisResult">
-                    
-                    <!-- Band Score Hero Card -->
-                    <div class="bg-white border border-outline-variant rounded-xl academic-shadow p-6 flex items-center justify-between">
+                <!-- 2. Loading Spinner Page -->
+                <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+                    <div class="spinner"></div>
+                    <p class="loading-text">DeepSeek-V3 正在深度分析评测中...</p>
+                    <p class="loading-sub">预计等待时间: 3秒</p>
+                </div>
+
+                <!-- 3. Real Result Panel (Initially Hidden) -->
+                <div class="result-scroll-wrapper" id="analysisResult" style="display:none;">
+                    <!-- Band Score Hero Header -->
+                    <div class="score-hero-card">
                         <div>
-                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider">Overall Band Score</p>
-                            <h3 id="resOverall" class="text-5xl font-black text-primary">7.5</h3>
-                            <p id="resLevel" class="text-xs text-secondary font-bold mt-1">Good User (C1 Advanced)</p>
+                            <p class="score-label">Overall Band Score</p>
+                            <h3 class="score-big-num" id="resOverall">7.5</h3>
+                            <p class="score-level-desc" id="resLevel">Good User (C1 Advanced)</p>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div class="bg-slate-50 px-3 py-1.5 rounded-lg text-center border border-slate-100 min-w-[55px]">
-                                <p class="text-[9px] text-slate-400 font-black">TR</p>
-                                <p id="resTR" class="text-md font-bold text-primary">7.0</p>
+                        <div class="sub-scores-grid">
+                            <div class="sub-score-box">
+                                <p class="name">TR</p>
+                                <p class="val" id="resTR">7.0</p>
                             </div>
-                            <div class="bg-slate-50 px-3 py-1.5 rounded-lg text-center border border-slate-100 min-w-[55px]">
-                                <p class="text-[9px] text-slate-400 font-black">CC</p>
-                                <p id="resCC" class="text-md font-bold text-primary">7.5</p>
+                            <div class="sub-score-box">
+                                <p class="name">CC</p>
+                                <p class="val" id="resCC">7.5</p>
                             </div>
-                            <div class="bg-slate-50 px-3 py-1.5 rounded-lg text-center border border-slate-100 min-w-[55px]">
-                                <p class="text-[9px] text-slate-400 font-black">LR</p>
-                                <p id="resLR" class="text-md font-bold text-primary">8.0</p>
+                            <div class="sub-score-box">
+                                <p class="name">LR</p>
+                                <p class="val" id="resLR">8.0</p>
                             </div>
-                            <div class="bg-slate-50 px-3 py-1.5 rounded-lg text-center border border-slate-100 min-w-[55px]">
-                                <p class="text-[9px] text-slate-400 font-black">GRA</p>
-                                <p id="resGRA" class="text-md font-bold text-primary">7.0</p>
+                            <div class="sub-score-box">
+                                <p class="name">GRA</p>
+                                <p class="val" id="resGRA">7.0</p>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Bento Box Feedback Card -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- Strengths -->
-                        <div class="bg-white border-l-4 border-l-secondary rounded-xl academic-shadow p-4 border border-outline-variant">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="material-symbols-outlined text-secondary font-black" style="font-variation-settings: 'FILL' 1">verified</span>
-                                <span class="text-xs font-bold text-secondary">优势亮点 (Strengths)</span>
-                            </div>
-                            <ul class="space-y-1.5 text-xs text-slate-600 leading-relaxed">
-                                <li id="resS1">• [亮点1]</li>
-                                <li id="resS2">• [亮点2]</li>
-                            </ul>
-                        </div>
-                        <!-- Improvements -->
-                        <div class="bg-white border-l-4 border-l-error rounded-xl academic-shadow p-4 border border-outline-variant">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="material-symbols-outlined text-error font-black" style="font-variation-settings: 'FILL' 1">report</span>
-                                <span class="text-xs font-bold text-error">改进建议 (Areas for Improvement)</span>
-                            </div>
-                            <ul class="space-y-1.5 text-xs text-slate-600 leading-relaxed">
-                                <li id="resI1" class="flex gap-1"><span class="text-error font-bold">•</span><span>[建议1]</span></li>
-                                <li id="resI2" class="flex gap-1"><span class="text-error font-bold">•</span><span>[建议2]</span></li>
-                            </ul>
                         </div>
                     </div>
 
-                    <!-- AI Rewriting Showcase Card -->
-                    <div class="bg-white border border-outline-variant rounded-xl academic-shadow p-5">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-xs font-extrabold text-[#00236f]">✨ AI 满分改写建议 (Refinement)</h4>
-                            <button onclick="copyModelEssay()" class="text-primary text-[11px] font-bold flex items-center gap-1 hover:underline">
-                                <span class="material-symbols-outlined text-[14px]">content_copy</span> Copy Essay
+                    <!-- Strengths and Improvements Bento -->
+                    <div class="bento-grid">
+                        <div class="bento-card success">
+                            <div class="bento-card-title success">
+                                <span class="icon-symbol" style="font-variation-settings: 'FILL' 1">verified</span>
+                                <span>优势亮点 (Strengths)</span>
+                            </div>
+                            <ul class="bento-list">
+                                <li id="resS1">• 词汇丰富度极高，使用了学术化表达。</li>
+                                <li id="resS2">• 论点逻辑清晰。</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bento-card error">
+                            <div class="bento-card-title error">
+                                <span class="icon-symbol" style="font-variation-settings: 'FILL' 1">report</span>
+                                <span>改进建议 (Areas for Improvement)</span>
+                            </div>
+                            <ul class="bento-list">
+                                <li id="resI1">• 论证略显单薄。</li>
+                                <li id="resI2">• 注意复合句中的标点符号。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- AI Refinement Showcase Card -->
+                    <div class="refinement-card">
+                        <div class="refinement-header">
+                            <h4 class="refinement-title">✨ AI 满分改写建议 (Refinement)</h4>
+                            <button onclick="copyModelEssay()" class="copy-btn">
+                                <span class="icon-symbol" style="font-size:14px;">content_copy</span>
+                                <span>Copy Essay</span>
                             </button>
                         </div>
-                        <div id="resRefinement" class="p-4 bg-slate-50 rounded-lg text-xs italic text-slate-600 border border-slate-100 leading-relaxed whitespace-pre-wrap">
-                            "Model essay placeholder..."
+                        <div class="refinement-body" id="resRefinement">
+                            Refining...
                         </div>
-                        <div class="mt-4 grid grid-cols-2 gap-4">
-                            <div class="p-3 bg-slate-50 rounded border border-slate-100">
-                                <p class="text-[9px] text-slate-400 font-bold uppercase">Vocabulary Boost</p>
-                                <p id="resVocab" class="text-xs mt-1">Instead of "bad effect", use <span class="text-secondary font-bold">"detrimental impact"</span></p>
+                        <div class="refinement-grid">
+                            <div class="boost-box">
+                                <p class="boost-tag">Vocabulary Boost</p>
+                                <p class="boost-content" id="resVocab">Instead of "bad effect", use <span style="color:var(--secondary); font-weight:bold;">"detrimental impact"</span></p>
                             </div>
-                            <div class="p-3 bg-slate-50 rounded border border-slate-100">
-                                <p class="text-[9px] text-slate-400 font-bold uppercase">Grammar Fix</p>
-                                <p id="resGrammar" class="text-xs mt-1">Correction: <span class="text-red-500 line-through">"The research show"</span> → <span class="text-secondary font-bold">"shows"</span></p>
+                            <div class="boost-box">
+                                <p class="boost-tag">Grammar Fix</p>
+                                <p class="boost-content" id="resGrammar">Correction: <span style="color:var(--error); text-decoration:line-through;">"The research show"</span> → <span style="color:var(--secondary); font-weight:bold;">"shows"</span></p>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Loading State Overlay -->
-                <div class="hidden absolute inset-0 bg-white/85 backdrop-blur-xs z-10 flex flex-col items-center justify-center space-y-3" id="loadingOverlay">
-                    <div class="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <p class="text-primary font-bold text-sm">DeepSeek-V3 正在深度分析评测中...</p>
-                    <p class="text-on-surface-variant text-[10px] font-semibold opacity-80">预计等待时间: 3秒</p>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Global Watermark Decoration -->
-    <div class="fixed bottom-4 right-4 pointer-events-none opacity-40">
-        <img alt="British Council Branding" class="w-12 h-12 object-contain" src="[https://lh3.googleusercontent.com/aida-public/AB6AXuCq8sxODXxAXBxSUcisb44SNIFUxvaWJm6xgfNYJz5w6I0XGSgDdDF4sbHCo_HlVkGZfTFYaHzXLxVMLBXAUWObMerq-O2jZ-GuWQ-LQvXq-Ecy8KZl4FQRVkhlBp8hGUtBR_aIK7Uhn49GgSfGa_CnKLoqv45YLsqIsjbUiImF2w0pFYYCNsimc5d0IJrksk6s1BIcYMUgfXb_NinfTuVtf5Gl07AJ8pA3F-ehOnHE9bOeX2U8EaAhRWFBHJ1WUe4EukL0MBB63Q](https://lh3.googleusercontent.com/aida-public/AB6AXuCq8sxODXxAXBxSUcisb44SNIFUxvaWJm6xgfNYJz5w6I0XGSgDdDF4sbHCo_HlVkGZfTFYaHzXLxVMLBXAUWObMerq-O2jZ-GuWQ-LQvXq-Ecy8KZl4FQRVkhlBp8hGUtBR_aIK7Uhn49GgSfGa_CnKLoqv45YLsqIsjbUiImF2w0pFYYCNsimc5d0IJrksk6s1BIcYMUgfXb_NinfTuVtf5Gl07AJ8pA3F-ehOnHE9bOeX2U8EaAhRWFBHJ1WUe4EukL0MBB63Q)"/>
+    <!-- Global Decoration Watermark -->
+    <div style="position:fixed; bottom:16px; right:16px; pointer-events:none; opacity:0.35;">
+        <img alt="British Council" style="width:48px; height:48px; object-fit:contain;" src="[https://lh3.googleusercontent.com/aida-public/AB6AXuCq8sxODXxAXBxSUcisb44SNIFUxvaWJm6xgfNYJz5w6I0XGSgDdDF4sbHCo_HlVkGZfTFYaHzXLxVMLBXAUWObMerq-O2jZ-GuWQ-LQvXq-Ecy8KZl4FQRVkhlBp8hGUtBR_aIK7Uhn49GgSfGa_CnKLoqv45YLsqIsjbUiImF2w0pFYYCNsimc5d0IJrksk6s1BIcYMUgfXb_NinfTuVtf5Gl07AJ8pA3F-ehOnHE9bOeX2U8EaAhRWFBHJ1WUe4EukL0MBB63Q](https://lh3.googleusercontent.com/aida-public/AB6AXuCq8sxODXxAXBxSUcisb44SNIFUxvaWJm6xgfNYJz5w6I0XGSgDdDF4sbHCo_HlVkGZfTFYaHzXLxVMLBXAUWObMerq-O2jZ-GuWQ-LQvXq-Ecy8KZl4FQRVkhlBp8hGUtBR_aIK7Uhn49GgSfGa_CnKLoqv45YLsqIsjbUiImF2w0pFYYCNsimc5d0IJrksk6s1BIcYMUgfXb_NinfTuVtf5Gl07AJ8pA3F-ehOnHE9bOeX2U8EaAhRWFBHJ1WUe4EukL0MBB63Q)"/>
     </div>
 
-    <!-- 4. Pure Frontend JavaScript Bridge Controller -->
+    <!-- 4. Pure Frontend Controller JS Bridge -->
     <script>
         const aiOutput = {js_ai_output};
         const lastEssay = {js_last_essay};
@@ -462,28 +1086,27 @@ HTML_TEMPLATE = f"""
         const stLoading = {js_loading_status};
         const apiConfigured = {js_api_configured};
 
-        // 页面初始化加载数据回显与视图控制
         window.onload = function() {{
-            // 恢复上一次的输入
+            // 恢复上一次在输入框填写的作文和题目
             if (lastEssay) document.getElementById('essayInput').value = lastEssay;
             if (lastPrompt) document.getElementById('promptInput').value = lastPrompt;
             if (lastTask) document.getElementById('taskSelect').value = lastTask;
             updateWordCount();
 
-            // 如果后端正在拼装加载
+            // 根据状态切换视图显示
             if (stLoading) {{
-                document.getElementById('loadingOverlay').classList.remove('hidden');
-                document.getElementById('emptyState').classList.add('hidden');
-                document.getElementById('analysisResult').classList.add('hidden');
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('analysisResult').style.display = 'none';
             }} else if (aiOutput) {{
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'none';
                 
                 if (aiOutput.error) {{
-                    alert("错误：\\n" + aiOutput.error);
-                    document.getElementById('emptyState').classList.remove('hidden');
+                    alert("接口请求发生错误: " + aiOutput.error);
+                    document.getElementById('emptyState').style.display = 'flex';
                 }} else {{
-                    // 开始往高定 Tailwind UI 模板中实时渲染真实 API 数据
+                    // 动态塞入真实 API 评测数据
                     document.getElementById('resOverall').innerText = aiOutput.overall || "5.5";
                     document.getElementById('resLevel').innerText = aiOutput.level || "Band Score";
                     document.getElementById('resTR').innerText = aiOutput.tr || "-";
@@ -494,20 +1117,20 @@ HTML_TEMPLATE = f"""
                     document.getElementById('resS1').innerText = "• " + (aiOutput.strength_1 || "");
                     document.getElementById('resS2').innerText = "• " + (aiOutput.strength_2 || "");
                     
-                    document.getElementById('resI1').innerHTML = `<span class="text-error font-bold">•</span><span>${{aiOutput.improvement_1 || ""}}</span>`;
-                    document.getElementById('resI2').innerHTML = `<span class="text-error font-bold">•</span><span>${{aiOutput.improvement_2 || ""}}</span>`;
+                    document.getElementById('resI1').innerHTML = `<span style="color:var(--error); font-weight:bold;">•</span> <span>${{aiOutput.improvement_1 || ""}}</span>`;
+                    document.getElementById('resI2').innerHTML = `<span style="color:var(--error); font-weight:bold;">•</span> <span>${{aiOutput.improvement_2 || ""}}</span>`;
                     
                     document.getElementById('resRefinement').innerText = aiOutput.refinement || "";
                     
-                    document.getElementById('resVocab').innerHTML = `Instead of "${{aiOutput.vocab_origin || "bad effect"}}", use <span class="text-secondary font-bold">"${{aiOutput.vocab_boost || "detrimental impact"}}"</span>`;
-                    document.getElementById('resGrammar').innerHTML = `Correction: <span class="text-red-500 line-through">"${{aiOutput.grammar_origin || ""}}"</span> → <span class="text-secondary font-bold">"${{aiOutput.grammar_fix || ""}}"</span>`;
+                    document.getElementById('resVocab').innerHTML = `Instead of "${{aiOutput.vocab_origin || "bad effect"}}", use <span style="color:var(--secondary); font-weight:bold;">"${{aiOutput.vocab_boost || "detrimental impact"}}"</span>`;
+                    document.getElementById('resGrammar').innerHTML = `Correction: <span style="color:var(--error); text-decoration:line-through;">"${{aiOutput.grammar_origin || ""}}"</span> → <span style="color:var(--secondary); font-weight:bold;">"${{aiOutput.grammar_fix || ""}}"</span>`;
                     
-                    document.getElementById('analysisResult').classList.remove('hidden');
+                    document.getElementById('analysisResult').style.display = 'flex';
                 }}
             }}
         }};
 
-        // 开始精批的逻辑：点击按钮，前端立刻上锁，并将数据传给 Python
+        // 点击按钮运行分析
         function startAnalysis() {{
             const essay = document.getElementById('essayInput').value.trim();
             const prompt = document.getElementById('promptInput').value.trim();
@@ -519,26 +1142,25 @@ HTML_TEMPLATE = f"""
             }}
 
             if (!apiConfigured) {{
-                alert("❌ 密钥未配置，请先在 Streamlit 后台 Settings -> Secrets 中贴入真实的 DeepSeek Key。");
+                alert("❌ 未配置 API Key，请先在 Streamlit 的 Settings -> Secrets 中贴入真实的 DeepSeek Key！");
                 return;
             }}
 
-            // 1. 本地 UI 立即进入高速加载状态，给用户完美的即时视觉反馈
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
-            document.getElementById('analysisResult').classList.add('hidden');
+            // 触发立即加载动画
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('analysisResult').style.display = 'none';
 
-            // 2. 利用 URL Query Parameters 安全高速传输给 Python 拦截器
+            // 通过 URL 回传向 Streamlit 触发 Rerun 任务并传递入参
             const targetUrl = window.parent.location.origin + window.parent.location.pathname + 
                 "?task=" + encodeURIComponent(task) + 
                 "&prompt=" + encodeURIComponent(prompt) + 
                 "&essay=" + encodeURIComponent(essay);
             
-            // 触发 parent streamlit 刷新重载
             window.parent.location.href = targetUrl;
         }}
 
-        // 清空重测
+        // 清空输入和状态
         function resetTest() {{
             document.getElementById('essayInput').value = "";
             document.getElementById('promptInput').value = "";
@@ -546,22 +1168,22 @@ HTML_TEMPLATE = f"""
             window.parent.location.href = window.parent.location.origin + window.parent.location.pathname;
         }}
 
-        // 计算单词数
+        // 单词计算器
         function updateWordCount() {{
             const text = document.getElementById('essayInput').value.trim();
-            const wordCount = text ? text.split(/\\s+/).length : 0;
-            document.getElementById('wordCount').innerText = `Word Count: ${{wordCount}} words`;
+            const count = text ? text.split(/\\s+/).length : 0;
+            document.getElementById('wordCount').innerText = `Word Count: ${{count}} words`;
         }}
 
-        // 一键复制代码
+        // 复制高分文章
         function copyModelEssay() {{
             const text = document.getElementById('resRefinement').innerText;
-            const tempInput = document.createElement("textarea");
-            tempInput.value = text;
-            document.body.appendChild(tempInput);
-            tempInput.select();
+            const temp = document.createElement("textarea");
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
             document.execCommand("copy");
-            document.body.removeChild(tempInput);
+            document.body.removeChild(temp);
             alert("📋 满分改写范文已成功复制到剪贴板！");
         }}
     </script>
@@ -569,5 +1191,5 @@ HTML_TEMPLATE = f"""
 </html>
 """
 
-# 8. 满屏一键覆盖渲染
+# 8. 全屏一键无缝注入
 st.components.v1.html(HTML_TEMPLATE, height=720, scrolling=False)
